@@ -1,0 +1,2 @@
+#cat=basic//10;type=string;label=Default Language: ISO code default language
+defaultLang = de

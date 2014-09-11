@@ -1,0 +1,8 @@
+2013-09-13 Klaus Hörmann <klaus.hoermann@world-direct.at>
+	* 2.1.0 Version released
+	* Added additional SQL where parts for hidden and deleted
+	* Added dependency extension "static_info_tables"
+	* Added newline after each link in the header tag
+
+2012-11-20 Klaus Hörmann  <klaus.hoermann@world-direct.at>
+	* Initial release
