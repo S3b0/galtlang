@@ -15,13 +15,13 @@ $EM_CONF[$_EXTKEY] = array (
 	'description' => 'If you have a multilanguage site and want to use the Google alternate hreflang tags this extension is for you.',
 	'category' => 'fe',
 	'shy' => 0,
-	'version' => '2.1.0',
+	'version' => '2.1.3',
 	'dependencies' => '',
 	'conflicts' => '',
 	'priority' => '',
 	'loadOrder' => '',
 	'module' => '',
-	'state' => 'alpha',
+	'state' => 'excludeFromUpdates',
 	'uploadfolder' => 0,
 	'createDirs' => '',
 	'modify_tables' => '',
@@ -34,7 +34,9 @@ $EM_CONF[$_EXTKEY] = array (
 	'CGLcompliance_note' => NULL,
 	'constraints' =>
 	array (
-		'depends' => array (),
+		'depends' => array (
+			'static_info_tables' => '6.0.0'
+		),
 		'conflicts' => array (),
 		'suggests' => array (),
 	),

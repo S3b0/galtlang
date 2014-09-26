@@ -45,27 +45,35 @@ class GaltLang {
 		$getParameterString = '';
 		$alternateLanguageEntries = array();
 		$extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['galtlang']);
+		/** @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
 		$objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Extbase\\Object\\ObjectManager');
+		/** @var \TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer $contentObjectRenderer */
 		$contentObjectRenderer = $objectManager->get('TYPO3\\CMS\\Frontend\\ContentObject\\ContentObjectRenderer');
+		/** @var \TYPO3\CMS\Extbase\Configuration\ConfigurationManager $configurationManager */
+		$configurationManager = $objectManager->get('TYPO3\\CMS\\Extbase\\Configuration\\ConfigurationManager');
+		/** @var array $extConfLocal Enables you to override settings using PageTS */
+		$extConfLocal = $configurationManager->getConfiguration(\TYPO3\CMS\Extbase\Configuration\ConfigurationManager::CONFIGURATION_TYPE_SETTINGS, 'galtlang');
+		\TYPO3\CMS\Core\Utility\ArrayUtility::mergeRecursiveWithOverrule($extConf, (array) $extConfLocal);
+		/** @var \TYPO3\CMS\Core\Database\DatabaseConnection $db */
+		$db = $GLOBALS['TYPO3_DB'];
+		/** @var \TYPO3\CMS\Frontend\Controller\TyposcriptFrontendController $TSFE */
+		$TSFE = $GLOBALS['TSFE'];
 
-			// Build string containing all GET parameters, without the "L" parameter
-		unset($_GET['L']);
-		foreach($_GET as $key => $value) {
-			$getParameterString .= '&' . $key . '=' . $value;
-		}
+		$this->buildGetParameterString($getParameterString, $language, $extConf);
 
 			// Page link configuration returning only the url
 		$linkConfiguration = array(
 			'returnLast' => 'url',
-			'parameter' => $GLOBALS['TSFE']->id,
-			'additionalParams' => $getParameterString
+			'parameter' => $TSFE->id,
+			'additionalParams' => $getParameterString,
+			'useCacheHash' => 0
 		);
 
 			// Default language entry
 		$tempConfiguration = $linkConfiguration;
 		$tempConfiguration['additionalParams'] .= '&L=0';
 		$defaultLanguageEntry = array(
-			'uid' => $GLOBALS['TSFE']->id,
+			'uid' => $TSFE->id,
 			'hreflang' => $extConf['defaultLang'],
 			'href' => str_replace($extConf['defaultLang'] . '/', '', $contentObjectRenderer->typolink('', $tempConfiguration))
 		);
@@ -76,19 +84,19 @@ class GaltLang {
 		 FROM pages_language_overlay
 		 LEFT JOIN sys_language ON pages_language_overlay.sys_language_uid = sys_language.uid
 		 LEFT JOIN static_languages ON sys_language.static_lang_isocode = static_languages.uid
-		 WHERE pages_language_overlay.pid = ' . $GLOBALS['TSFE']->id . ' AND NOT pages_language_overlay.hidden AND NOT pages_language_overlay.deleted';
-		$result = $GLOBALS['TYPO3_DB']->sql_query($sqlStatement);
+		 WHERE pages_language_overlay.pid = ' . $TSFE->id . ' AND NOT pages_language_overlay.hidden AND NOT pages_language_overlay.deleted';
+		$result = $db->sql_query($sqlStatement);
 
-		while ($row = $GLOBALS['TYPO3_DB']->sql_fetch_assoc($result)) {
+		while ($row = $db->sql_fetch_assoc($result)) {
 			$tempConfiguration = $linkConfiguration;
 			$tempConfiguration['additionalParams'] .= '&L=' . $row['sys_language_uid'];
 			$alternateLanguageEntries[] = array(
-				'uid' => $GLOBALS['TSFE']->id,
+				'uid' => $TSFE->id,
 				'hreflang' => $row['hreflang'] ?: strtolower($row['iso']),
 				'href' => $contentObjectRenderer->typolink('', $tempConfiguration)
 			);
 		}
-		$GLOBALS['TYPO3_DB']->sql_free_result($result);
+		$db->sql_free_result($result);
 
 			// Generate header string, write only when there
 		$headerString = str_replace('%hreflang%', $defaultLanguageEntry['hreflang'], str_replace('%href%', $defaultLanguageEntry['href'], '<link rel="alternate" hreflang="%hreflang%" href="%href%" />')) . "\r\n";
@@ -100,7 +108,38 @@ class GaltLang {
 			return '';
 		}
 
+		// Add the canonical tag
+		if ($extConf['canonical']) {
+			$linkConfiguration['forceAbsoluteUrl'] = 1;
+			if (\TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('TYPO3_SSL')) {
+				$linkConfiguration['forceAbsoluteUrl.']['scheme'] = 'https';
+			}
+			$linkConfiguration['additionalParams'] .= '&L=' . $language ?: $TSFE->sys_language_content;
+			$headerString .= str_replace('%href%', $contentObjectRenderer->typoLink('', $linkConfiguration), '<link rel="canonical" href="%href%" />') . "\r\n";
+		}
+
 		return $headerString;
 	}
+
+	/**
+	 * @param string $getParameterString
+	 * @param int    $language
+	 * @param array  $extConf
+	 */
+	protected function buildGetParameterString(&$getParameterString, &$language = 0, array $extConf) {
+		// Build string containing all GET parameters, without the "L" parameter
+		$includeParams = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $extConf['includeParams'], TRUE);
+		$includeParams[] = 'L'; // Make sure L ist set in excludeParams, otherwise hreflang-tags would not work! Minimum Requirement!
+		foreach(\TYPO3\CMS\Core\Utility\GeneralUtility::_GET() as $key => $value) {
+			if ($key === 'L') {
+				$language = $value;
+			}
+			if (in_array($key, $includeParams)) {
+				$getParameterString .= is_array($value) ? \TYPO3\CMS\Core\Utility\GeneralUtility::implodeArrayForUrl($key, $value) : '&' . $key . '=' . $value;
+			}
+		}
+	}
+
 }
+
 ?>
