@@ -110,10 +110,10 @@ class GaltLang {
 
 		// Add the canonical tag
 		if ($extConf['canonical']) {
-			$linkConfiguration['forceAbsoluteUrl'] = 1;
-			if (\TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('TYPO3_SSL')) {
-				$linkConfiguration['forceAbsoluteUrl.']['scheme'] = 'https';
-			}
+//			$linkConfiguration['forceAbsoluteUrl'] = 1;
+//			if (\TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('TYPO3_SSL')) {
+//				$linkConfiguration['forceAbsoluteUrl.']['scheme'] = 'https';
+//			}
 			$linkConfiguration['additionalParams'] .= '&L=' . $language ?: $TSFE->sys_language_content;
 			$headerString .= str_replace('%href%', $contentObjectRenderer->typoLink('', $linkConfiguration), '<link rel="canonical" href="%href%" />') . "\r\n";
 		}
