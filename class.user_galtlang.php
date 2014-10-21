@@ -100,8 +100,8 @@ class GaltLang {
 
 			// Generate header string, write only when there
 		$headerString = str_replace('%hreflang%', $defaultLanguageEntry['hreflang'], str_replace('%href%', $defaultLanguageEntry['href'], '<link rel="alternate" hreflang="%hreflang%" href="%href%" />')) . "\r\n";
-		if (count($alternateLanguageEntries)) {
-			foreach ($alternateLanguageEntries as $entry) {
+		if ( count($alternateLanguageEntries) ) {
+			foreach ( $alternateLanguageEntries as $entry ) {
 				$headerString .= str_replace('%hreflang%', $entry['hreflang'], str_replace('%href%', $entry['href'], '<link rel="alternate" hreflang="%hreflang%" href="%href%" />')) . "\r\n";
 			}
 		} else {
@@ -109,12 +109,13 @@ class GaltLang {
 		}
 
 		// Add the canonical tag
-		if ($extConf['canonical']) {
+		if ( $extConf['canonical'] ) {
 //			$linkConfiguration['forceAbsoluteUrl'] = 1;
-//			if (\TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('TYPO3_SSL')) {
+//			if ( \TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('TYPO3_SSL') ) {
 //				$linkConfiguration['forceAbsoluteUrl.']['scheme'] = 'https';
 //			}
-			$linkConfiguration['additionalParams'] .= '&L=' . $language ?: $TSFE->sys_language_content;
+
+			$linkConfiguration['additionalParams'] .= '&L=' . intval($language ?: $TSFE->sys_language_content);
 			$headerString .= str_replace('%href%', $contentObjectRenderer->typoLink('', $linkConfiguration), '<link rel="canonical" href="%href%" />') . "\r\n";
 		}
 
@@ -130,11 +131,12 @@ class GaltLang {
 		// Build string containing all GET parameters, without the "L" parameter
 		$includeParams = \TYPO3\CMS\Core\Utility\GeneralUtility::trimExplode(',', $extConf['includeParams'], TRUE);
 		$includeParams[] = 'L'; // Make sure L ist set in excludeParams, otherwise hreflang-tags would not work! Minimum Requirement!
-		foreach(\TYPO3\CMS\Core\Utility\GeneralUtility::_GET() as $key => $value) {
-			if ($key === 'L') {
+		foreach ( \TYPO3\CMS\Core\Utility\GeneralUtility::_GET() as $key => $value ) {
+			if ( $key === 'L' ) {
 				$language = $value;
+				continue;
 			}
-			if (in_array($key, $includeParams)) {
+			if ( in_array($key, $includeParams) ) {
 				$getParameterString .= is_array($value) ? \TYPO3\CMS\Core\Utility\GeneralUtility::implodeArrayForUrl($key, $value) : '&' . $key . '=' . $value;
 			}
 		}
