@@ -136,6 +136,30 @@ class GaltLang {
 				$language = $value;
 				continue;
 			}
+			/**
+			 * News Extension Configuration (skip controller and action)
+			 */
+			if ( $key === 'tx_news_pi1' ) {
+				if ( $value['news'] ) {
+					$getParameterString .= '&' . $key . '[news]=' . $value['news'];
+				}
+				if ( $value['overwriteDemand']['categories'] ) {
+					$getParameterString .= '&' . $key . '[overwriteDemand][categories]=' . $value['overwriteDemand']['categories'];
+				}
+				if ( $value['overwriteDemand']['tags'] ) {
+					$getParameterString .= '&' . $key . '[overwriteDemand][tags]=' . $value['overwriteDemand']['tags'];
+				}
+				if ( $value['overwriteDemand']['year'] ) {
+					$getParameterString .= '&' . $key . '[overwriteDemand][year]=' . $value['overwriteDemand']['year'];
+				}
+				if ( $value['overwriteDemand']['month'] ) {
+					$getParameterString .= '&' . $key . '[overwriteDemand][month]=' . $value['overwriteDemand']['month'];
+				}
+				if ( $value['@widget_0']['currentPage'] ) {
+					$getParameterString .= '&' . $key . '[@widget_0][currentPage]=' . $value['@widget_0']['currentPage'];
+				}
+				continue;
+			}
 			if ( in_array($key, $includeParams) ) {
 				$getParameterString .= is_array($value) ? \TYPO3\CMS\Core\Utility\GeneralUtility::implodeArrayForUrl($key, $value) : '&' . $key . '=' . $value;
 			}
