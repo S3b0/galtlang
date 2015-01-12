@@ -63,10 +63,9 @@ class GaltLang {
 
 			// Page link configuration returning only the url
 		$linkConfiguration = array(
-			'returnLast' => 'url',
 			'parameter' => $TSFE->id,
 			'additionalParams' => $getParameterString,
-			'useCacheHash' => boolval($TSFE->cHash)
+			'useCacheHash' => (bool) $TSFE->cHash
 		);
 
 			// Default language entry
@@ -75,7 +74,7 @@ class GaltLang {
 		$defaultLanguageEntry = array(
 			'uid' => $TSFE->id,
 			'hreflang' => $extConf['defaultLang'],
-			'href' => str_replace($extConf['defaultLang'] . '/', '', $contentObjectRenderer->typolink('', $tempConfiguration))
+			'href' => str_replace($extConf['defaultLang'] . '/', '', $contentObjectRenderer->typoLink_URL($tempConfiguration))
 		);
 
 			// Other page language overlays
@@ -93,7 +92,7 @@ class GaltLang {
 			$alternateLanguageEntries[] = array(
 				'uid' => $TSFE->id,
 				'hreflang' => $row['hreflang'] ?: strtolower($row['iso']),
-				'href' => $contentObjectRenderer->typolink('', $tempConfiguration)
+				'href' => $contentObjectRenderer->typoLink_URL($tempConfiguration)
 			);
 		}
 		$db->sql_free_result($result);
@@ -116,7 +115,7 @@ class GaltLang {
 //			}
 
 			$linkConfiguration['additionalParams'] .= '&L=' . intval($language ?: $TSFE->sys_language_content);
-			$headerString .= str_replace('%href%', $contentObjectRenderer->typoLink('', $linkConfiguration), '<link rel="canonical" href="%href%" />') . "\r\n";
+			$headerString .= str_replace('%href%', $contentObjectRenderer->typoLink_URL($linkConfiguration), '<link rel="canonical" href="%href%" />') . "\r\n";
 		}
 
 		return $headerString;
