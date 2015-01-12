@@ -66,7 +66,7 @@ class GaltLang {
 			'returnLast' => 'url',
 			'parameter' => $TSFE->id,
 			'additionalParams' => $getParameterString,
-			'useCacheHash' => 0
+			'useCacheHash' => boolval($TSFE->cHash)
 		);
 
 			// Default language entry
