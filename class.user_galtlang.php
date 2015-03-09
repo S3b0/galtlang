@@ -100,11 +100,12 @@ class GaltLang {
 		$db->sql_free_result($result);
 
 			// Generate header string, write only when there
-		$hreflang = (int) $conf['rootPid'] === (int) $TSFE->id ? '<link rel="alternate" hreflang="x-default" href="%href%" />' : '<link rel="alternate" hreflang="%hreflang%" href="%href%" />';
-		$headerString = str_replace('%hreflang%', $defaultLanguageEntry['hreflang'], str_replace('%href%', $defaultLanguageEntry['href'], $hreflang)) . "\r\n";
+		$hreflangDefaultLanguage = (int) $conf['rootPid'] === (int) $TSFE->id ? '<link rel="alternate" hreflang="x-default" href="%href%" />' : '<link rel="alternate" hreflang="%hreflang%" href="%href%" />';
+		$hreflangAlternateLanguages = '<link rel="alternate" hreflang="%hreflang%" href="%href%" />';
+		$headerString = str_replace('%hreflang%', $defaultLanguageEntry['hreflang'], str_replace('%href%', $defaultLanguageEntry['href'], $hreflangDefaultLanguage)) . "\r\n";
 		if ( count($alternateLanguageEntries) ) {
 			foreach ( $alternateLanguageEntries as $entry ) {
-				$headerString .= str_replace('%hreflang%', $entry['hreflang'], str_replace('%href%', $entry['href'], '<link rel="alternate" hreflang="%hreflang%" href="%href%" />')) . "\r\n";
+				$headerString .= str_replace('%hreflang%', $entry['hreflang'], str_replace('%href%', $entry['href'], $hreflangAlternateLanguages)) . "\r\n";
 			}
 		} else {
 			return '';
