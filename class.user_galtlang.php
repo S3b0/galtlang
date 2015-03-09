@@ -104,7 +104,7 @@ class GaltLang {
 		$headerString = str_replace('%hreflang%', $defaultLanguageEntry['hreflang'], str_replace('%href%', $defaultLanguageEntry['href'], $hreflang)) . "\r\n";
 		if ( count($alternateLanguageEntries) ) {
 			foreach ( $alternateLanguageEntries as $entry ) {
-				$headerString .= str_replace('%hreflang%', $entry['hreflang'], str_replace('%href%', $entry['href'], $hreflang)) . "\r\n";
+				$headerString .= str_replace('%hreflang%', $entry['hreflang'], str_replace('%href%', $entry['href'], '<link rel="alternate" hreflang="%hreflang%" href="%href%" />')) . "\r\n";
 			}
 		} else {
 			return '';
