@@ -39,9 +39,11 @@ class GaltLang {
 	 * The default language here is set to german (de).
 	 * This should be configureable in the extension settings.
 	 *
-	 * @return string
+	 * @param  string  Empty string (no content to process)
+	 * @param  array   TypoScript configuration
+	 * @return string  HTML output
 	 */
-	public function insertAlternateTags() {
+	public function insertAlternateTags($content, $conf) {
 		$getParameterString = '';
 		$alternateLanguageEntries = array();
 		$extConf = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['galtlang']);
@@ -98,10 +100,11 @@ class GaltLang {
 		$db->sql_free_result($result);
 
 			// Generate header string, write only when there
-		$headerString = str_replace('%hreflang%', $defaultLanguageEntry['hreflang'], str_replace('%href%', $defaultLanguageEntry['href'], '<link rel="alternate" hreflang="%hreflang%" href="%href%" />')) . "\r\n";
+		$hreflang = (int) $conf['rootPid'] === (int) $TSFE->id ? '<link rel="alternate" hreflang="x-default" href="%href%" />' : '<link rel="alternate" hreflang="%hreflang%" href="%href%" />';
+		$headerString = str_replace('%hreflang%', $defaultLanguageEntry['hreflang'], str_replace('%href%', $defaultLanguageEntry['href'], $hreflang)) . "\r\n";
 		if ( count($alternateLanguageEntries) ) {
 			foreach ( $alternateLanguageEntries as $entry ) {
-				$headerString .= str_replace('%hreflang%', $entry['hreflang'], str_replace('%href%', $entry['href'], '<link rel="alternate" hreflang="%hreflang%" href="%href%" />')) . "\r\n";
+				$headerString .= str_replace('%hreflang%', $entry['hreflang'], str_replace('%href%', $entry['href'], $hreflang)) . "\r\n";
 			}
 		} else {
 			return '';
