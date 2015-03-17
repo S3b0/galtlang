@@ -102,7 +102,7 @@ class GaltLang {
 			// Generate header string, write only when there
 		$headerString = '';
 		if ( (int) $conf['rootPid'] === (int) $TSFE->id ) {
-			$headerString = '<link rel="alternate" hreflang="x-default" href="' . $conf['baseURL'] . '" />';
+			$headerString = '<link rel="alternate" hreflang="x-default" href="' . $conf['baseURL'] . '" />\r\n';
 		}
 		$hreflangPattern = '<link rel="alternate" hreflang="%hreflang%" href="%href%" />';
 		$headerString .= str_replace('%hreflang%', $defaultLanguageEntry['hreflang'], str_replace('%href%', $defaultLanguageEntry['href'], $hreflangPattern)) . "\r\n";
