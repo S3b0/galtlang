@@ -1,6 +1,6 @@
-#cat=basic//10;type=string;label=Default Language: ISO code default language
-defaultLang = de
-#cat=basic//20;type=boolean;label=Canonical Tag: Add the canonical tag if set
+#cat=basic//10;type=string;label=Default Language: ISO code of default language
+defaultLang = en
+#cat=basic//20;type=boolean;label=Canonical Tag: Adds a canonical tag if set
 canonical = 1
-#cat=basic//30;type=string;label=Include Parameters: Parameters to include in URL explicitly
+#cat=basic//30;type=string;label=Include Parameters: Parameters to explicitly include in URL (All others will be dropped)
 includeParams =

@@ -2,20 +2,14 @@
 
 /***************************************************************
  * Extension Manager/Repository config file for ext "galtlang".
- *
- * Auto generated 08-07-2014 09:59
- *
- * Manual updates:
- * Only the data in the array - everything else is removed by next
- * writing. "version" and "dependencies" must not be touched!
  ***************************************************************/
 
-$EM_CONF[$_EXTKEY] = array (
+$EM_CONF[ $_EXTKEY ] = [
 	'title' => 'Google Alternate Language',
 	'description' => 'If you have a multilanguage site and want to use the Google alternate hreflang tags this extension is for you.',
 	'category' => 'fe',
 	'shy' => 0,
-	'version' => '2.1.3',
+	'version' => '6.2.0',
 	'dependencies' => '',
 	'conflicts' => '',
 	'priority' => '',
@@ -27,19 +21,19 @@ $EM_CONF[$_EXTKEY] = array (
 	'modify_tables' => '',
 	'clearcacheonload' => 0,
 	'lockType' => '',
-	'author' => 'Klaus Hörmann',
-	'author_email' => 'klaus.hoermann@world-direct.at',
-	'author_company' => 'World-Direct eBusiness solutions GmbH.',
+	'author' => 'Sebastian Iffland',
+	'author_email' => 'Sebastian.Iffland@ecom-ex.com',
+	'author_company' => 'ecom instruments GmbH',
 	'CGLcompliance' => NULL,
 	'CGLcompliance_note' => NULL,
 	'constraints' =>
-	array (
-		'depends' => array (
+	[
+		'depends' => [
 			'static_info_tables' => '6.0.0'
-		),
-		'conflicts' => array (),
-		'suggests' => array (),
-	),
-);
+		],
+		'conflicts' => [],
+		'suggests' => []
+	]
+];
 
 ?>
