@@ -39,6 +39,29 @@ class GaltLang {
 	protected $extensionConfiguration = [];
 
 	/**
+	 * @var \TYPO3\CMS\Extbase\Object\ObjectManager
+	 */
+	protected $objectManager = NULL;
+
+	/**
+	 * @var \TYPO3\CMS\Frontend\Controller\TyposcriptFrontendController
+	 */
+	protected $typoscriptFrontendController = NULL;
+
+	/**
+	 * @var \TYPO3\CMS\Core\Database\DatabaseConnection
+	 */
+	protected $db = NULL;
+
+
+	public function __construct() {
+		$this->extensionConfiguration = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['galtlang']);
+		$this->objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Extbase\\Object\\ObjectManager');
+		$this->typoscriptFrontendController = $GLOBALS['TSFE'];
+		$this->db = $GLOBALS['TYPO3_DB'];
+	}
+
+	/**
 	 * Function inserts the alternate hreflang tags into the header.
 	 * The default language here is set to german (de).
 	 * This should be configureable in the extension settings.
@@ -48,83 +71,101 @@ class GaltLang {
 	 * @return string
 	 */
 	public function insertAlternateTags($content, $conf) {
+		$headerString = "\r\n<!-- google alternate languages begin -->\r\n";
 		$getParameterString = '';
 		$hreflangCollection = [];
-		$this->extensionConfiguration = unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['galtlang']);
-		/** @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
-		$objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\\CMS\\Extbase\\Object\\ObjectManager');
-		/** @var \TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer $contentObjectRenderer */
-		$contentObjectRenderer = $objectManager->get('TYPO3\\CMS\\Frontend\\ContentObject\\ContentObjectRenderer');
+		$parsedLanguages    = [];
 		/** @var \TYPO3\CMS\Extbase\Configuration\ConfigurationManager $configurationManager */
-		$configurationManager = $objectManager->get('TYPO3\\CMS\\Extbase\\Configuration\\ConfigurationManager');
+		$configurationManager = $this->objectManager->get('TYPO3\\CMS\\Extbase\\Configuration\\ConfigurationManager');
 		/** @var array $localExtensionConfiguration Enables you to override settings using PageTS */
 		$localExtensionConfiguration = $configurationManager->getConfiguration(\TYPO3\CMS\Extbase\Configuration\ConfigurationManager::CONFIGURATION_TYPE_SETTINGS, 'galtlang');
 		\TYPO3\CMS\Core\Utility\ArrayUtility::mergeRecursiveWithOverrule($this->extensionConfiguration, (array) $localExtensionConfiguration);
-		/** @var \TYPO3\CMS\Core\Database\DatabaseConnection $db */
-		$db = $GLOBALS['TYPO3_DB'];
-		/** @var \TYPO3\CMS\Frontend\Controller\TyposcriptFrontendController $TSFE */
-		$TSFE = $GLOBALS['TSFE'];
 
 		$this->buildGetParameterString($getParameterString, $language);
 
-		// Page link configuration returning url only
-		$linkConfiguration = [
-			'parameter' => $TSFE->id,
-			'additionalParams' => $getParameterString,
-			'useCacheHash' => (bool) $TSFE->cHash
-		];
-
-		// Default language entry
-		$page = $db->exec_SELECTgetSingleRow('*', 'pages', 'uid=' . $TSFE->id . $TSFE->sys_page->enableFields('pages'));
-		// @root page set hreflang x-default
-		if ( (int) $conf['rootPid'] === (int) $TSFE->id ) {
-			$hreflangCollection[] = [
-				'x-default',
-				$conf['baseURL']
-			];
+		/**
+		 * @root page set hreflang X-DEFAULT
+		 */
+		if ( (int) $conf['rootPid'] === (int) $this->typoscriptFrontendController->id ) {
+			$hreflangCollection[] = [ 'x-default', $conf['baseURL'] ];
 		}
+		/**
+		 * Add DEFAULT LANGUAGE hreflang if not hidden (l18n_cfg)
+		 */
+		$page = $this->db->exec_SELECTgetSingleRow('*', 'pages', 'uid=' . $this->typoscriptFrontendController->id . $this->typoscriptFrontendController->sys_page->enableFields('pages'));
 		if ( ($page['l18n_cfg'] & 1) === 0 ) {
-			$tempConfiguration = $linkConfiguration;
-			$tempConfiguration['parameter'] = $conf['altTarget.'][ $this->extensionConfiguration['defaultLang'] ] ?: $TSFE->id;
 			$hreflangCollection[] = [
 				$this->extensionConfiguration['defaultLang'],
-				str_replace( $this->extensionConfiguration['defaultLang'] . '/', '', $contentObjectRenderer->typoLink_URL($tempConfiguration) )
+				str_replace( $this->extensionConfiguration['defaultLang'] . '/', '', $this->getLink(
+					$conf['altTarget.'][ $this->extensionConfiguration['defaultLang'] ] ?: $this->typoscriptFrontendController->id,
+					$getParameterString . '&L=0'
+				) )
 			];
 		}
 
-		// Other page language overlays
-		$sqlStatement = '
-		SELECT sys_language.uid AS sys_language_uid, sys_language.hreflang AS hreflang, static_languages.lg_iso_2 AS iso
-		FROM pages_language_overlay
-		LEFT JOIN sys_language ON pages_language_overlay.sys_language_uid = sys_language.uid
-		LEFT JOIN static_languages ON sys_language.static_lang_isocode = static_languages.uid
-		WHERE pages_language_overlay.pid = ' . $TSFE->id . $TSFE->sys_page->enableFields( 'pages_language_overlay' );
-		$result = $db->sql_query($sqlStatement);
-
-		while ( $row = $db->sql_fetch_assoc($result) ) {
-			$tempConfiguration = $linkConfiguration;
-			$tempConfiguration['parameter'] = $conf['altTarget.'][ strtolower($row['iso']) ] ?: $TSFE->id;
-			$tempConfiguration['additionalParams'] .= '&L=' . $row['sys_language_uid'];
-			$hreflangCollection[] = [
-				$row['hreflang'] ?: strtolower($row['iso']),
-				$contentObjectRenderer->typoLink_URL($tempConfiguration)
-			];
+		/**
+		 * Add ALTERNATE LANGUAGES hreflang
+		 */
+		if ( $records = $this->db->exec_SELECTgetRows(
+			'sys_language.uid AS sys_language_uid, sys_language.hreflang AS hreflang, static_languages.lg_iso_2 AS iso',
+			'pages_language_overlay LEFT JOIN sys_language ON pages_language_overlay.sys_language_uid = sys_language.uid LEFT JOIN static_languages ON sys_language.static_lang_isocode = static_languages.uid',
+			'pages_language_overlay.pid = ' . $this->typoscriptFrontendController->id . $this->typoscriptFrontendController->sys_page->enableFields( 'pages_language_overlay' )
+		) ) {
+			foreach ( $records as $row ) {
+				$hreflangCollection[] = [
+					$row['hreflang'] ?: strtolower($row['iso']),
+					$this->getLink(
+						$conf['altTarget.'][ strtolower($row['iso']) ] ?: $this->typoscriptFrontendController->id,
+						$getParameterString . '&L=' . $row['sys_language_uid']
+					)
+				];
+				$parsedLanguages[] = strtolower($row['iso']);
+			}
 		}
-		$db->sql_free_result($result);
 
-		$headerString = '';
+		/**
+		 * Add NON-TRANSLATED PAGE, whereas altTarget is set
+		 */
+		if ( is_array($conf['altTarget.']) ) {
+			foreach ( $conf['altTarget.'] as $iso => $altTarget ) {
+				if ( in_array( $iso, $parsedLanguages ) ) {
+					continue;
+				}
+				$lRecord = $this->db->exec_SELECTgetSingleRow('sys_language.uid', 'static_languages LEFT JOIN sys_language ON sys_language.static_lang_isocode=static_languages.uid', 'static_languages.lg_iso_2="' . strtoupper($iso) . '"');
+				$hreflangCollection[] = [
+					$iso,
+					$this->getLink( $altTarget, $getParameterString . '&L=' . $lRecord['uid'] )
+				];
+			}
+		}
+
 		foreach ( $hreflangCollection as $hreflang ) {
-			$headerString .= sprintf('<link rel="alternate" hreflang="%1$s" href="%2$s" />', $hreflang[0], $hreflang[1]) . "\r\n";
+			$headerString .= "<link rel=\"alternate\" hreflang=\"$hreflang[0]\" href=\"$hreflang[1]\" />\r\n";
 		}
 
 		// Add the canonical tag
 		if ( $this->extensionConfiguration['canonical'] ) {
-			$linkConfiguration['parameter'] = $conf['altTarget.'][ strtolower($TSFE->sys_language_isocode) ] ?: $TSFE->id;
-			$linkConfiguration['additionalParams'] .= '&L=' . intval($language ?: $TSFE->sys_language_uid);
-			$headerString .= sprintf( '<link rel="canonical" href="%1$s" />', $contentObjectRenderer->typoLink_URL($linkConfiguration) ) . "\r\n";
+			$headerString .= "<!-- Add canonical tag (toggle in extConf) -->\r\n<link rel=\"canonical\" href=\"" . $this->getLink(
+					$conf['altTarget.'][ strtolower($this->typoscriptFrontendController->sys_language_isocode) ] ?: $this->typoscriptFrontendController->id,
+					$getParameterString . '&L=' . intval($language ?: $this->typoscriptFrontendController->sys_language_uid)
+				) . "\" />\r\n";
 		}
 
-		return $headerString;
+		return $headerString . "<!-- google alternate languages end -->\r\n\r\n";
+	}
+
+	private function getLink($parameter = 0, $additionalParams = '') {
+		/** @var \TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer $contentObjectRenderer */
+		$contentObjectRenderer = $this->objectManager->get('TYPO3\\CMS\\Frontend\\ContentObject\\ContentObjectRenderer');
+
+		// Page link configuration returning url only
+		$linkConfiguration = [
+			'parameter' => $parameter,
+			'additionalParams' => $additionalParams,
+			'useCacheHash' => (bool) $this->typoscriptFrontendController->cHash
+		];
+
+		return $contentObjectRenderer->typoLink_URL($linkConfiguration);
 	}
 
 	/**

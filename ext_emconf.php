@@ -7,9 +7,9 @@
 $EM_CONF[ $_EXTKEY ] = [
 	'title' => 'Google Alternate Language',
 	'description' => 'If you have a multilanguage site and want to use the Google alternate hreflang tags this extension is for you.',
-	'category' => 'fe',
+	'category' => 'Frontend',
 	'shy' => 0,
-	'version' => '6.2.0',
+	'version' => '6.2.1',
 	'dependencies' => '',
 	'conflicts' => '',
 	'priority' => '',
