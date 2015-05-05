@@ -101,6 +101,7 @@ class GaltLang {
 					$getParameterString . '&L=0'
 				) )
 			];
+			$parsedLanguages[] = $this->extensionConfiguration['defaultLang'];
 		}
 
 		/**
@@ -116,7 +117,7 @@ class GaltLang {
 					$row['hreflang'] ?: strtolower($row['iso']),
 					$this->getLink(
 						$conf['altTarget.'][ strtolower($row['iso']) ] ?: $this->typoscriptFrontendController->id,
-						$getParameterString . '&L=' . $row['sys_language_uid']
+						$getParameterString . '&L=' . intval($row['sys_language_uid'])
 					)
 				];
 				$parsedLanguages[] = strtolower($row['iso']);
@@ -134,7 +135,7 @@ class GaltLang {
 				$lRecord = $this->db->exec_SELECTgetSingleRow('sys_language.uid', 'static_languages LEFT JOIN sys_language ON sys_language.static_lang_isocode=static_languages.uid', 'static_languages.lg_iso_2="' . strtoupper($iso) . '"');
 				$hreflangCollection[] = [
 					$iso,
-					$this->getLink( $altTarget, $getParameterString . '&L=' . $lRecord['uid'] )
+					$this->getLink( $altTarget, $getParameterString . '&L=' . intval($lRecord['uid']) )
 				];
 			}
 		}
