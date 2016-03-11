@@ -89,24 +89,30 @@ class GaltLang
         $this->buildGetParameterString($getParameterString, $language);
 
         /**
-         * @root page set hreflang X-DEFAULT
+         * Set hreflang X-DEFAULT on root page
          */
         if ((int)$conf[ 'rootPid' ] === (int)$this->typoscriptFrontendController->id) {
             $hreflangCollection[] = ['x-default', $conf[ 'baseURL' ]];
-        }
-        /**
-         * Add DEFAULT LANGUAGE hreflang if not hidden (l18n_cfg)
-         */
-        $page = $this->db->exec_SELECTgetSingleRow('*', 'pages', 'uid=' . $this->typoscriptFrontendController->id . $this->typoscriptFrontendController->sys_page->enableFields('pages'));
-        if (($page[ 'l18n_cfg' ] & 1) === 0) {
             $hreflangCollection[] = [
                 $this->extensionConfiguration[ 'defaultLang' ],
-                str_replace($this->extensionConfiguration[ 'defaultLang' ] . '/', '', $this->getLink(
-                    $conf[ 'altTarget.' ][ $this->extensionConfiguration[ 'defaultLang' ] ] ?: $this->typoscriptFrontendController->id,
-                    $getParameterString . '&L=0'
-                ))
+                $this->getLink((int)$conf[ 'rootPid' ], '&L=0')
             ];
             $parsedLanguages[] = $this->extensionConfiguration[ 'defaultLang' ];
+        } else {
+            /**
+             * Add DEFAULT LANGUAGE hreflang if not hidden (l18n_cfg)
+             */
+            $page = $this->db->exec_SELECTgetSingleRow('*', 'pages', 'uid=' . $this->typoscriptFrontendController->id . $this->typoscriptFrontendController->sys_page->enableFields('pages'));
+            if (($page[ 'l18n_cfg' ] & 1) === 0) {
+                $hreflangCollection[] = [
+                    $this->extensionConfiguration[ 'defaultLang' ],
+                    str_replace("{$this->extensionConfiguration[ 'defaultLang' ]}/", "", $this->getLink(
+                        (int)$conf[ 'altTarget.' ][ $this->extensionConfiguration[ 'defaultLang' ] ] ?: $this->typoscriptFrontendController->id,
+                        "{$getParameterString}&L=0"
+                    ))
+                ];
+                $parsedLanguages[] = $this->extensionConfiguration[ 'defaultLang' ];
+            }
         }
 
         /**
@@ -122,8 +128,8 @@ class GaltLang
                 $hreflangCollection[] = [
                     $row[ 'hreflang' ] ?: strtolower($row[ 'iso' ]),
                     $this->getLink(
-                        $conf[ 'altTarget.' ][ strtolower($row[ 'iso' ]) ] ?: $this->typoscriptFrontendController->id,
-                        $getParameterString . '&L=' . intval($row[ 'sys_language_uid' ])
+                        (int)$conf[ 'altTarget.' ][ strtolower($row[ 'iso' ]) ] ?: $this->typoscriptFrontendController->id,
+                        $getParameterString . '&L=' . (int)$row[ 'sys_language_uid' ]
                     )
                 ];
                 $parsedLanguages[] = strtolower($row[ 'iso' ]);
@@ -141,7 +147,7 @@ class GaltLang
                 $lRecord = $this->db->exec_SELECTgetSingleRow('sys_language.uid', 'static_languages LEFT JOIN sys_language ON sys_language.static_lang_isocode=static_languages.uid', 'static_languages.lg_iso_2="' . strtoupper($iso) . '"');
                 $hreflangCollection[] = [
                     $iso,
-                    $this->getLink($altTarget, $getParameterString . '&L=' . intval($lRecord[ 'uid' ]))
+                    $this->getLink($altTarget, $getParameterString . '&L=' . (int)$lRecord[ 'uid' ])
                 ];
             }
         }
@@ -154,7 +160,7 @@ class GaltLang
         if ($this->extensionConfiguration[ 'canonical' ]) {
             $headerString .= "<!-- Add canonical tag (toggle in extConf) -->\r\n<link rel=\"canonical\" href=\"" . $this->getLink(
                     $conf[ 'altTarget.' ][ strtolower($this->typoscriptFrontendController->sys_language_isocode) ] ?: $this->typoscriptFrontendController->id,
-                    $getParameterString . '&L=' . intval($language ?: $this->typoscriptFrontendController->sys_language_uid)
+                    $getParameterString . '&L=' . (int)$language ?: (int)$this->typoscriptFrontendController->sys_language_uid
                 ) . "\" />\r\n";
         }
 
